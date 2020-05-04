@@ -71,7 +71,5 @@ function Find-ChocoPackage {
 
 	# Return the result without additional evaluation, even if empty, to let PackageManagement handle error management
 	# Will only terminate if Invoke-Choco fails to call choco.exe
-	Invoke-Choco @chocoParams |
-		ConvertTo-SoftwareIdentity -RequestedName $Name -Source $selectedSource |
-			Where-Object {Test-PackageVersion -Package $_ -RequiredVersion $RequiredVersion -MinimumVersion $MinimumVersion -MaximumVersion $MaximumVersion}
+	Invoke-Choco @chocoParams | Where-Object {Test-PackageVersion -Package $_ -RequiredVersion $RequiredVersion -MinimumVersion $MinimumVersion -MaximumVersion $MaximumVersion}
 }

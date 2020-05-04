@@ -48,7 +48,7 @@ Describe "Chocolatier testing" -Tags @('BVT', 'DRT') {
 
 	It "find-package with wildcard search" {
 
-		$d=find-package -ProviderName $Chocolatier -name *firefox -Verbose
+		$d=find-package -ProviderName $Chocolatier -name firefox* -Verbose
 		$d | ?{ $_.name -eq "firefox" } | should not BeNullOrEmpty
 
 	}

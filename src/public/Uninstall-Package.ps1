@@ -30,7 +30,7 @@ function Uninstall-Package {
 		$chocoParams.Add('Version',$Matches.version)
 	}
 
-	$swid = Invoke-Choco @chocoParams | ConvertTo-SoftwareIdentity -RequestedName $Matches.name -Source $Matches.source
+	$swid = Invoke-Choco @chocoParams
 
 	if (-not $swid) {
 		# Invoke-Choco didn't throw an exception but we couldn't pull a Software Identity from the output.

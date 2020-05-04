@@ -2,9 +2,6 @@
 function Invoke-Choco {
 	[CmdletBinding()]
 	param (
-		[string]
-		$ChocoExePath = (Get-ChocoPath),
-
 		[Parameter(Mandatory=$true, ParameterSetName='Search')]
 		[switch]
 		$Search,
@@ -72,99 +69,193 @@ function Invoke-Choco {
 		$AdditionalArgs = (Get-AdditionalArguments)
 	)
 
-	if ($ChocoExePath) {
-		Write-Debug ("Choco already installed in $ChocoExePath")
-	} else {
-		$ChocoExePath = Install-ChocoBinaries
-	}
+	if ($script:NativeAPI) {
+		$ChocoAPI = [chocolatey.Lets]::GetChocolatey()
 
-	# Split on the first hyphen of each option/switch
-	$argSplitRegex = '(?:^|\s)-'
-	# Installation parameters/arguments can interfere with non-installation commands (ex: search) and should be filtered out
-	$argFilterRegex = '\w*(?:param|arg)\w*'
+		# Source Management
+		if ($SourceList) {
+			$output = $ChocoAPI.GetConfiguration().MachineSources
+		} elseif ($SourceAdd -or $SourceRemove) {
+			$ChocoAPI.Set({
+				param($config)
 
-	# Source Management
-	if ($SourceList -or $SourceAdd -or $SourceRemove) {
-		# We're not interested in additional args for source management
-		Clear-Variable 'AdditionalArgs'
+				$config.CommandName = 'source'
+				$config.SourceCommand.Name = $SourceName
 
-		$cmdString = 'source '
-		if ($SourceAdd) {
-			$cmdString += "add --name='$SourceName' --source='$SourceLocation' "
-		} elseif ($SourceRemove) {
-			$cmdString += "remove --name='$SourceName' "
+				if ($SourceAdd) {
+					$config.SourceCommand.Command = [chocolatey.infrastructure.app.domain.SourceCommandType]::add
+					$config.Sources = $SourceLocation
+				} elseif ($SourceRemove) {
+					$config.SourceCommand.Command = [chocolatey.infrastructure.app.domain.SourceCommandType]::remove
+				}
+			})
+		} else {
+			# Package Management
+			$ChocoAPI.Set({
+				param($config)
+
+				if ($Install) {
+					$config.CommandName = [chocolatey.infrastructure.app.domain.CommandNameType]::install
+				} else {
+					$AdditionalArgs = $([regex]::Split($AdditionalArgs,$argSplitRegex) | Where-Object -FilterScript {$_ -notmatch $argFilterRegex}) -join ' -'
+
+					if ($Search) {
+						$config.CommandName = [chocolatey.infrastructure.app.domain.SourceCommandType]::list
+					} elseif ($Uninstall) {
+						$config.CommandName = [chocolatey.infrastructure.app.domain.SourceCommandType]::remove
+						$config.ForceDependencies = $true
+					} elseif ($Upgrade) {
+						$config.CommandName = [chocolatey.infrastructure.app.domain.SourceCommandType]::upgrade
+					}
+				}
+
+				if ($Package) {
+					$config.PackageNames = $Package
+				}
+
+				if ($Version) {
+					$config.Version = $Version
+				}
+
+				if ($SourceName) {
+					$config.Sources = $ChocoAPI.GetConfiguration().MachineSources | Where-Object Name -eq $SourceName | Select-Object -ExpandProperty Key
+				}
+
+				if ($AllVersions) {
+					$config.AllVersions = $true
+				}
+
+				if ($LocalOnly) {
+					$config.ListCommand.LocalOnly = $true
+				}
+
+				if (Get-ForceProperty)
+				{
+					$config.Force = $true
+				}
+			})
 		}
 
-		# If neither add or remote actions specified, list sources
+		Write-Debug ("Invoking the Choco API with the following configuration: $($ChocoAPI.GetConfiguration())")
 
-		$cmdString += '--limit-output '
+		try {
+			$output = $ChocoAPI.Run()
+		} catch {
+			ThrowError -ExceptionName 'System.OperationCanceledException' `
+				-ExceptionMessage ($output -or 'No message from ChocoAPI') `
+				-ErrorID 'JobFailure' `
+				-ErrorCategory InvalidOperation `
+				-ExceptionObject $ChocoAPI.GetConfiguration()
+		}
+
+		write-verbose "Output from ChocoAPI: $output"
 	} else {
-		# Package Management
-		if ($Install) {
-			$cmdString = 'install '
-			# Accept all prompts and dont show installation progress percentage - the excess output from choco.exe will slow down PowerShell
-			$AdditionalArgs += ' --yes --no-progress '
-		} else {
-			# Any additional args passed to other commands should be stripped of install-related arguments because Choco gets confused if they're passed
-			$AdditionalArgs = $([regex]::Split($AdditionalArgs,$argSplitRegex) | Where-Object -FilterScript {$_ -notmatch $argFilterRegex}) -join ' -'
+		$ChocoExePath = Get-ChocoPath
 
-			if ($Search) {
-				$cmdString = 'search '
-				$AdditionalArgs += ' --limit-output '
-			} elseif ($Uninstall) {
-				$cmdString = 'uninstall '
-				# Accept all prompts
-				$AdditionalArgs += ' --yes --remove-dependencies '
-			} elseif ($Upgrade) {
-				$cmdString = 'upgrade '
-				# Accept all prompts
-				$AdditionalArgs += ' --yes '
+		if ($ChocoExePath) {
+			Write-Debug ("Choco already installed")
+		} else {
+			Install-ChocoBinaries
+		}
+
+		# Split on the first hyphen of each option/switch
+		$argSplitRegex = '(?:^|\s)-'
+		# Installation parameters/arguments can interfere with non-installation commands (ex: search) and should be filtered out
+		$argFilterRegex = '\w*(?:param|arg)\w*'
+
+		# Source Management
+		if ($SourceList -or $SourceAdd -or $SourceRemove) {
+			# We're not interested in additional args for source management
+			Clear-Variable 'AdditionalArgs'
+
+			$cmdString = 'source '
+			if ($SourceAdd) {
+				$cmdString += "add --name='$SourceName' --source='$SourceLocation' "
+			} elseif ($SourceRemove) {
+				$cmdString += "remove --name='$SourceName' "
+			}
+
+			# If neither add or remote actions specified, list sources
+
+			$cmdString += '--limit-output '
+		} else {
+			# Package Management
+			if ($Install) {
+				$cmdString = 'install '
+				# Accept all prompts and dont show installation progress percentage - the excess output from choco.exe will slow down PowerShell
+				$AdditionalArgs += ' --yes --no-progress '
+			} else {
+				# Any additional args passed to other commands should be stripped of install-related arguments because Choco gets confused if they're passed
+				$AdditionalArgs = $([regex]::Split($AdditionalArgs,$argSplitRegex) | Where-Object -FilterScript {$_ -notmatch $argFilterRegex}) -join ' -'
+
+				if ($Search) {
+					$cmdString = 'search '
+					$AdditionalArgs += ' --limit-output '
+				} elseif ($Uninstall) {
+					$cmdString = 'uninstall '
+					# Accept all prompts
+					$AdditionalArgs += ' --yes --remove-dependencies '
+				} elseif ($Upgrade) {
+					$cmdString = 'upgrade '
+					# Accept all prompts
+					$AdditionalArgs += ' --yes '
+				}
+			}
+
+			# Finish constructing package management command string
+
+			if ($Package) {
+				$cmdString += "$Package "
+			}
+
+			if ($Version) {
+				$cmdString += "--version $Version "
+			}
+
+			if ($SourceName) {
+				$cmdString += "--source $SourceName "
+			}
+
+			if ($AllVersions) {
+				$cmdString += "--all-versions "
+			}
+
+			if ($LocalOnly) {
+				$cmdString += "--local-only "
 			}
 		}
 
-		# Finish constructing package management command string
-
-		if ($Package) {
-			$cmdString += "$Package "
+		if (Get-ForceProperty)
+		{
+			$cmdString += '--force '
 		}
 
-		if ($Version) {
-			$cmdString += "--version $Version "
+		# Joins the constructed and user-provided arguments together to be soon split as a single array of options passed to choco.exe
+		$cmdString += $AdditionalArgs
+		Write-Debug ("Calling $ChocoExePath $cmdString")
+		$cmdString = $cmdString.Split(' ')
+
+		# Save the output to a variable so we can inspect the exit code before submitting the output to the pipeline
+		$output = & $ChocoExePath $cmdString
+
+		if ($LASTEXITCODE -ne 0) {
+			ThrowError -ExceptionName 'System.OperationCanceledException' `
+				-ExceptionMessage $($output | Out-String) `
+				-ErrorID 'JobFailure' `
+				-ErrorCategory InvalidOperation `
+				-ExceptionObject $job
+		} else {
+			if ($Install -or ($Search -and $SourceName)) {
+				$output | ConvertTo-SoftwareIdentity -RequestedName $Package -Source $SourceName
+			} elseif ($Uninstall) {
+				$output | ConvertTo-SoftwareIdentity -RequestedName $Package -Source $script:PackageSourceName
+			} elseif ($Search) {
+				$output | ConvertTo-SoftwareIdentity -RequestedName $Package
+			} elseif ($SourceList) {
+				$output | ConvertFrom-String -Delimiter "\|" -PropertyNames $script:ChocoSourcePropertyNames
+			} else {
+				$output
+			}
 		}
-
-		if ($SourceName) {
-			$cmdString += "--source $SourceName "
-		}
-
-		if ($AllVersions) {
-			$cmdString += "--all-versions "
-		}
-
-		if ($LocalOnly) {
-			$cmdString += "--local-only "
-		}
-	}
-
-	if (Get-ForceProperty)
-	{
-		$cmdString += '--force '
-	}
-
-	# Joins the constructed and user-provided arguments together to be soon split as a single array of options passed to choco.exe
-	$cmdString += $AdditionalArgs
-	Write-Debug ("Calling $ChocoExePath $cmdString")
-	$cmdString = $cmdString.Split(' ')
-
-	# Save the output to a variable so we can inspect the exit code before submitting the output to the pipeline
-	$output = & $ChocoExePath $cmdString
-
-	if ($LASTEXITCODE -ne 0) {
-		ThrowError -ExceptionName 'System.OperationCanceledException' `
-					-ExceptionMessage $($output | Out-String) `
-					-ErrorID 'JobFailure' `
-					-ErrorCategory InvalidOperation `
-					-ExceptionObject $job
-	} else {
-		$output
 	}
 }
