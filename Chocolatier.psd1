@@ -7,7 +7,7 @@
 	Description = 'Package Management (OneGet) provider that facilitates installing Chocolatey packages from any NuGet repository.'
 	# Refuse to load in CoreCLR if PowerShell below 7.0.1 due to regressions with how 7.0 loads PackageManagement DLLs
 	# https://github.com/PowerShell/PowerShell/pull/12203
-	PowerShellVersion = if($PSEdition -eq 'Core') {
+	PowerShellVersion = if ($PSEdition -eq 'Core') {
 		'7.0.1'
 	} else {
 		'3.0'

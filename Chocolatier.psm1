@@ -12,7 +12,7 @@ $script:AcceptLicense = "AcceptLicense"
 # Define choco related variables
 $script:ChocoExeName = 'choco.exe'
 
-# Don't try to use the native Chocolatey .NET library unless using FullCLR and explicitly specified by the user
+# Only allow the native Chocolatey .NET library with FullCLR
 if ($PSEdition -eq 'Desktop' -and $env:CHOCO_NATIVEAPI) {
 	$script:NativeAPI = $true
 }
@@ -39,7 +39,7 @@ Import-LocalizedData LocalizedData -filename 'Chocolatier.Resource.psd1'
 
 # Load included libraries, since the manifest wont handle that for package providers
 if ($script:NativeAPI) {
-	Get-ChildItem $ScriptPath/lib -Recurse -Filter '*.dll' -File | ForEach-Object {
+	Get-ChildItem $ScriptPath/lib -Recurse -Filter 'chocolatey.dll' -File | ForEach-Object {
 		Add-Type -Path $_.FullName
 	}
 }

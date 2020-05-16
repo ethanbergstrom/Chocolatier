@@ -22,12 +22,7 @@ function Uninstall-Package {
 	$chocoParams = @{
 		Uninstall = $true
 		Package = $Matches.name
-	}
-
-	if ($request.Options.ContainsKey($script:AllVersions)) {
-		$chocoParams.Add('AllVersions',$true)
-	} else {
-		$chocoParams.Add('Version',$Matches.version)
+		Version = $Matches.version
 	}
 
 	$swid = Invoke-Choco @chocoParams
