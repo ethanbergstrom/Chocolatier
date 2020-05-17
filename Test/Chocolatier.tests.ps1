@@ -2,7 +2,13 @@
 
 Import-PackageProvider $Chocolatier -Force
 
-Describe 'basic package search operations' {
+if ($PSEdition -eq 'Desktop' -and $env:CHOCO_NATIVEAPI) {
+	$platform = 'API'
+} else {
+	$platform = 'CLI'
+}
+
+Describe "$platform basic package search operations" {
 	Context 'without additional arguments' {
 		$package = 'cpu-z'
 
@@ -29,7 +35,7 @@ Describe 'basic package search operations' {
 	}
 }
 
-Describe "DSC-compliant package installation and uninstallation" {
+Describe "$platform DSC-compliant package installation and uninstallation" {
 	Context 'without additional arguments' {
 		$package = 'cpu-z'
 
@@ -65,7 +71,7 @@ Describe "DSC-compliant package installation and uninstallation" {
 	}
 }
 
-Describe "pipline-based package installation and uninstallation" {
+Describe "$platform pipline-based package installation and uninstallation" {
 	Context 'without additional arguments' {
 		$package = 'cpu-z'
 
@@ -90,7 +96,7 @@ Describe "pipline-based package installation and uninstallation" {
 	}
 }
 
-Describe 'multi-source support' {
+Describe "$platform multi-source support" {
 	BeforeAll {
 		$altSourceName = 'LocalChocoSource'
 		$altSourceLocation = $PSScriptRoot
@@ -122,7 +128,7 @@ Describe 'multi-source support' {
 	}
 }
 
-Describe 'version filters' {
+Describe "$platform version filters" {
 	$package = "cpu-z"
 	$version = "1.77"
 
