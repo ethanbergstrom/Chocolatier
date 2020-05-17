@@ -6,7 +6,7 @@ install:
   - dotnet --version
   - dotnet tool restore
   - dotnet paket restore
-  - ps: Get-ChildItem .\packages -Recurse
+  - ps: New-Item -ItemType Directory -Name lib
   - ps: Copy-Item .\packages\chocolatey.lib\lib\chocolatey.dll .\lib\
   - ps: Copy-Item .\packages\log4net\lib\net40-full\log4net.dll .\lib\
   - ps: Remove-Item @('appveyor.yml','paket*','packages','Test') -Force -Recurse
