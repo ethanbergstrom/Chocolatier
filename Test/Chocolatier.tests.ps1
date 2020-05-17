@@ -157,7 +157,7 @@ Describe 'version filters' {
 		}
 	}
 
-	Context '"latest" version is specified' {
+	Context '"latest" version' {
 		It 'does not find the "latest" locally installed version if an outdated version is installed' {
 			Install-Package -name $package -requiredVersion $version -ProviderName $Chocolatier -Force
 			Get-Package -ProviderName $Chocolatier -Name $package -RequiredVersion 'latest' -ErrorAction SilentlyContinue | Where-Object {$_.Name -contains $package} | Should BeNullOrEmpty
