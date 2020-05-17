@@ -18,7 +18,7 @@ build_script:
 test_script:
   - ps: |
       $env:CHOCO_NATIVEAPI = $true
-      Invoke-Pester -PesterOption -OutputFormat NUnitXml -OutputFile TestsResults.NativeAPI.xml
+      Invoke-Pester -OutputFormat NUnitXml -OutputFile TestsResults.NativeAPI.xml
   - ps: (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\TestsResults.NativeAPI.xml))
   - pwsh: Invoke-Pester -PesterOption (New-PesterOption -TestSuiteName 'CLI') -OutputFormat NUnitXml -OutputFile TestsResults.CLI.xml
   - pwsh: (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\TestsResults.CLI.xml))
