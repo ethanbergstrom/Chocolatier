@@ -62,6 +62,18 @@ function Invoke-Choco {
 	)
 
 	$sourceCommandName = 'source'
+	# Split on the first hyphen of each option/switch
+	$argSplitRegex = '(?:^|\s)-'
+	# Installation parameters/arguments can interfere with non-installation commands (ex: search) and should be filtered out
+	$argParamFilterRegex = '\w*(?:param|arg)\w*'
+	# ParamGlobal Flag
+	$paramGlobalRegex = '\w*-(?:p.+global)\w*'
+	# ArgGlobal Flag
+	$argGlobalRegex = '\w*-(?:(a|i).+global)\w*'
+	# Just parameters
+	$paramFilterRegex = '\w*(?:param)\w*'
+	# Just parameters
+	$argFilterRegex = '\w*(?:arg)\w*'
 
 	if ($script:NativeAPI) {
 		$ChocoAPI = [chocolatey.Lets]::GetChocolatey().SetCustomLogging([chocolatey.infrastructure.logging.NullLog]::new())
@@ -159,7 +171,19 @@ function Invoke-Choco {
 					if ($Install) {
 						$config.CommandName = [chocolatey.infrastructure.app.domain.CommandNameType]::install
 						$config.PromptForConfirmation = $False
-						$config.PackageParameters = $AdditionalArgs
+
+						[regex]::Split($AdditionalArgs,$argSplitRegex) | ForEach-Object {
+							if ($_ -match $paramGlobalRegex) {
+								$config.ApplyPackageParametersToDependencies = $True
+							} elseif ($_ -match $paramFilterRegex) {
+								# Just get the parameters and trim quotes on either end
+								$config.PackageParameters = $_.Split(' ',2)[1].Trim('"','''')
+							} elseif ($_ -match $argGlobalRegex) {
+								$config.ApplyInstallArgumentsToDependencies = $True
+							} elseif ($_ -match $argFilterRegex) {
+								$config.InstallArguments = $_.Split(' ',2)[1].Trim('"','''')
+							}
+						}
 					} elseif ($Uninstall) {
 						$config.CommandName = [chocolatey.infrastructure.app.domain.CommandNameType]::uninstall
 						$config.ForceDependencies = $true
@@ -196,11 +220,6 @@ function Invoke-Choco {
 			Install-ChocoBinaries
 		}
 
-		# Split on the first hyphen of each option/switch
-		$argSplitRegex = '(?:^|\s)-'
-		# Installation parameters/arguments can interfere with non-installation commands (ex: search) and should be filtered out
-		$argFilterRegex = '\w*(?:param|arg)\w*'
-
 		# Source Management
 		if ($SourceList -or $SourceAdd -or $SourceRemove) {
 			# We're not interested in additional args for source management
@@ -224,7 +243,7 @@ function Invoke-Choco {
 				$AdditionalArgs += ' --yes --no-progress '
 			} else {
 				# Any additional args passed to other commands should be stripped of install-related arguments because Choco gets confused if they're passed
-				$AdditionalArgs = $([regex]::Split($AdditionalArgs,$argSplitRegex) | Where-Object -FilterScript {$_ -notmatch $argFilterRegex}) -join ' -'
+				$AdditionalArgs = $([regex]::Split($AdditionalArgs,$argSplitRegex) | Where-Object -FilterScript {$_ -notmatch $argParamFilterRegex}) -join ' -'
 
 				if ($Search) {
 					$cmdString = 'search '
