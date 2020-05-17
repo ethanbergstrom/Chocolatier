@@ -6,6 +6,7 @@ install:
   - dotnet --version
   - dotnet tool restore
   - dotnet paket restore
+  - ps: Get-Module pester
 
 build_script:
   - ps: |
@@ -17,12 +18,12 @@ build_script:
 
 test_script:
   - ps: |
-      $env:CHOCO_NATIVE
-      Invoke-Pester -PesterOption (New-PesterOption -TestSuiteName 'FullCLR') -OutputFormat NUnitXml -OutputFile TestsResults.FullCLR.xml -PassThru
-      (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\TestsResults.FullCLR.xml))
+      $env:CHOCO_NATIVEAPI = $true
+      Invoke-Pester -PesterOption (New-PesterOption -TestSuiteName 'NativeAPI') -OutputFormat NUnitXml -OutputFile TestsResults.NativeAPI.xml -PassThru
+      (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\TestsResults.NativeAPI.xml))
   - pwsh:
-      Invoke-Pester -PesterOption (New-PesterOption -TestSuiteName 'CoreCLR') -OutputFormat NUnitXml -OutputFile TestsResults.CoreCLR.xml -PassThru
-      (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\TestsResults.CoreCLR.xml))
+      Invoke-Pester -PesterOption (New-PesterOption -TestSuiteName 'CLI') -OutputFormat NUnitXml -OutputFile TestsResults.CLI.xml -PassThru
+      (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\TestsResults.CLI.xml))
 
 # deploy_script:
 #   - ps: if ($env:APPVEYOR_REPO_BRANCH -eq 'master') {Publish-Module -Name Chocolatier -NuGetApiKey "$env:PSGALLERYKEY"}
