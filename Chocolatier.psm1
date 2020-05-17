@@ -39,7 +39,7 @@ Import-LocalizedData LocalizedData -filename 'Chocolatier.Resource.psd1'
 
 # Load included libraries, since the manifest wont handle that for package providers
 if ($script:NativeAPI) {
-	Get-ChildItem $ScriptPath/lib -Recurse -Filter 'chocolatey.dll' -File | ForEach-Object {
+	Get-ChildItem $ScriptPath/lib/ -Filter 'chocolatey.dll' -File | ForEach-Object {
 		Add-Type -Path $_.FullName
 	}
 }

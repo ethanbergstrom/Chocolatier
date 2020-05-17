@@ -1,6 +1,6 @@
 ﻿$Chocolatier = 'Chocolatier'
 
-Import-PackageProvider "$PSScriptRoot\..\$Chocolatier.psm1" -Force
+Import-PackageProvider $Chocolatier -Force
 
 Describe 'basic package search operations' {
 	Context 'without additional arguments' {
@@ -100,7 +100,7 @@ Describe 'multi-source support' {
 		Unregister-PackageSource -Name $altSourceName -ProviderName $Chocolatier -ErrorAction SilentlyContinue
 	}
 	AfterAll {
-		Remove-Item $altSourceLocation\$package* -Force -ErrorAction SilentlyContinue
+		Remove-Item "$altSourceLocation\*.nupkg" -Force -ErrorAction SilentlyContinue
 		Unregister-PackageSource -Name $altSourceName -ProviderName $Chocolatier -ErrorAction SilentlyContinue
 	}
 
