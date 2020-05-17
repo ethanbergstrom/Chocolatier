@@ -1,6 +1,9 @@
 version: 1.0.{build}
 
+image: Visual Studio 2019
+
 install:
+  - dotnet --version
   - dotnet tool restore
   - dotnet paket restore
   - ps: Copy-Item .\packages\chocolatey.lib\lib\chocolatey.dll .\lib\
