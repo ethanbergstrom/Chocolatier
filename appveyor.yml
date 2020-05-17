@@ -6,7 +6,7 @@ install:
   - dotnet --version
   - dotnet tool restore
   - dotnet paket restore
-  - ps: Update-Module pester -force
+  - cinst pester
 
 build_script:
   - ps: |
