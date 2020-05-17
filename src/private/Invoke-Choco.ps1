@@ -64,7 +64,7 @@ function Invoke-Choco {
 	$sourceCommandName = 'source'
 
 	if ($script:NativeAPI) {
-		$ChocoAPI = [chocolatey.Lets]::GetChocolatey()
+		$ChocoAPI = [chocolatey.Lets]::GetChocolatey().SetCustomLogging([chocolatey.infrastructure.logging.NullLog]::new())
 
 		# Series of generic paramters that can be used across both 'get' and 'set' operations, which are called differently
 		$genericParams = {
