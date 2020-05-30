@@ -172,7 +172,7 @@ Under PowerShell 5.1 and below Chocolatier invokes Chocolatey through it's nativ
 
 The provider's standard battery of tests run about **36% faster** under the native API versus using the CLI interpreter, with operations that don't invoke a package (searching for packages, registering sources, etc.) running about **10x faster**.
 
-By default, Chocolatey continue to use the API when used with PowerShell 5.1 and below, but can revert to using the CLI in the environment entries before the provider is first invoked:
+By default, Chocolatier uses the API when invoked with PowerShell 5.1 and below, but can revert to using the CLI in the environment entries before the provider is first invoked:
 ```PowerShell
 $env:CHOCO_CLI = $true
 Find-Package -Provider Chocolatier -Name nodejs
