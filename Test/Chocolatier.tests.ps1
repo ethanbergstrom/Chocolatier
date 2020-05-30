@@ -2,7 +2,7 @@
 
 Import-PackageProvider $Chocolatier -Force
 
-if ($PSEdition -eq 'Desktop' -and $env:CHOCO_NATIVEAPI) {
+if ($PSEdition -eq 'Desktop' -and -not $env:CHOCO_CLI) {
 	$platform = 'API'
 } else {
 	$platform = 'CLI'
