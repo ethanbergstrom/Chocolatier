@@ -129,8 +129,8 @@ Describe "$platform multi-source support" {
 }
 
 Describe "$platform version filters" {
-	$package = "cpu-z"
-	$version = "1.77"
+	$package = 'cpu-z'
+	$version = '1.85'
 
 	AfterAll {
 		Uninstall-Package -Name $package -Provider $Chocolatier -ErrorAction SilentlyContinue
