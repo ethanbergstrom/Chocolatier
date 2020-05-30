@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## [1.2.0] - 2020-05-22 - Default Native Chocolatey API Support
+## [1.2.0] - 2020-05-30 - Default Native Chocolatey API Support
 ### Changed
 * FullCLR versions of PowerShell (5.1 and below) now invoke Chocolatey through the native API instead of the Choco.exe CLI by default
 
