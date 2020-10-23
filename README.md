@@ -1,6 +1,8 @@
 # Chocolatier
 Chocolatier is Package Management (OneGet) provider that facilitates installing Chocolatey packages from any NuGet repository. The provider is heavily influenced by the work of [Jianyun](https://github.com/jianyunt) and the [ChocolateyGet](https://github.com/jianyunt/ChocolateyGet) project.
 
+As of October 2020, development on Chocolatier has merged upstream with the more widely known ChocolateyGet project. Please use and contribute to ChocolateyGet v2.0+ going forward.
+
 [![Build status](https://ci.appveyor.com/api/projects/status/14pwjwch40ww0cxd?svg=true)](https://ci.appveyor.com/project/ethanbergstrom/chocolatier)
 
 ## Install Chocolatier
